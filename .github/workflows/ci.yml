@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Tests
+        run: pytest -q
+      - name: Notebook al día con src/
+        run: |
+          python tools/build_notebook.py
+          git diff --exit-code dashboard_hbo_max.ipynb

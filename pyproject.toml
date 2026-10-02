@@ -10,10 +10,23 @@ requires-python = ">=3.10"
 dependencies = ["dash>=2.17", "plotly>=5.22", "pandas>=2.2"]
 
 [project.optional-dependencies]
-dev = ["pytest", "jupyter", "ipykernel"]
+dev = ["pytest", "ruff", "jupyter", "ipykernel", "nbconvert"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py310"
+src = ["src", "tests"]
+extend-exclude = ["*.ipynb"]  # generado por tools/build_notebook.py
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
+ignore = [
+    "E501",  # el formateador controla el largo del código; los textos largos son prosa
+    "RUF001", "RUF002", "RUF003",  # tildes y signos en textos en español
+]

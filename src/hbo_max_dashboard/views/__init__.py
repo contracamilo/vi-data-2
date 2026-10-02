@@ -1,1 +1,1 @@
-"""Capa de vistas: layout, figuras y callbacks de Dash. Consume la capa de lógica."""
+"""Capa de vistas: catálogo de gráficas, componentes, layout y callbacks de Dash."""

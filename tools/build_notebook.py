@@ -1,65 +1,186 @@
-"""Genera `dashboard_hbo_max.ipynb` a partir del paquete en src/, para entregarlo
-como notebook autocontenido (Colab). Ejecutar: python tools/build_notebook.py"""
+"""Genera el entregable `dashboard_hbo_max.ipynb` a partir del paquete en `src/`.
+
+El notebook es autocontenido (funciona en Colab sin clonar el repo): cada módulo se escribe
+con `%%writefile`, y la sección de análisis sale del catálogo `views.charts.CHARTS`.
+
+Uso: python tools/build_notebook.py
+"""
+
 import json
+import sys
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PKG = ROOT / "src" / "hbo_max_dashboard"
-MODULES = [
-    "__init__", "config",
-    "data/__init__", "data/cleaning", "data/repository",
-    "logic/__init__", "logic/filters", "logic/metrics",
-    "views/__init__", "views/theme", "views/figures", "views/layout", "views/callbacks",
-    "app",
-]
+SRC = ROOT / "src"
+PKG = SRC / "hbo_max_dashboard"
+OUT = ROOT / "dashboard_hbo_max.ipynb"
+
+sys.path.insert(0, str(SRC))
+from hbo_max_dashboard.views.charts import CHARTS  # noqa: E402
 
 
-def md(text):
+def md(text: str) -> dict:
     return {"cell_type": "markdown", "metadata": {}, "source": text.strip().splitlines(keepends=True)}
 
 
-def code(text):
-    return {"cell_type": "code", "metadata": {}, "execution_count": None, "outputs": [],
-            "source": text.strip("\n").splitlines(keepends=True)}
+def code(text: str) -> dict:
+    return {
+        "cell_type": "code",
+        "metadata": {},
+        "execution_count": None,
+        "outputs": [],
+        "source": text.strip("\n").splitlines(keepends=True),
+    }
 
 
-cells = [
-    md("""
-# Dashboard HBO Max · Películas y Series
-Dashboard interactivo (Dash + Plotly) sobre el catálogo de HBO Max.
-El código está separado en tres capas: **datos** (`data`: lectura y limpieza), **lógica** (`logic`: filtros y métricas) y **vistas** (`views`: layout, figuras y callbacks).
+def package_modules() -> list[Path]:
+    """Módulos del paquete, con cada `__init__.py` antes que sus hermanos."""
+    files = [p for p in PKG.rglob("*.py") if p.name != "__main__.py"]
+    return sorted(files, key=lambda p: (p.parent.relative_to(PKG).parts, p.name != "__init__.py", p.name))
+
+
+def header_cells() -> list[dict]:
+    questions = "\n".join(f"{i}. {c.question}" for i, c in enumerate(CHARTS, 1))
+    return [
+        md(f"""
+# HBO Max · Películas y Series
+**Actividad 4 · Mi primer prototipo de dashboard** — Visualización de datos, Universidad de La Salle.
+
+**Dataset:** catálogo de HBO Max en EE. UU. (JustWatch, mayo de 2022, Kaggle): `titles.csv` con más de 3.000 títulos
+y `credits.csv` con más de 66.000 créditos de actores y directores.
+
+**Preguntas que responde este análisis:**
+
+{questions}
+
+**Arquitectura.** El código es un paquete de Python separado en tres capas:
+- `data`: lectura y limpieza de los CSV (único punto que toca el disco).
+- `logic`: filtros y métricas como funciones puras sobre DataFrames (sin Dash ni Plotly).
+- `views`: catálogo de gráficas, componentes, layout y callbacks de Dash.
+
+El mismo catálogo de gráficas alimenta el análisis estático de este notebook y el dashboard interactivo.
 """),
-    md("## 1. Dependencias"),
-    code("!pip install -q dash plotly pandas"),
-    md("## 2. Datos\nSube `titles.csv` y `credits.csv` (Archivos de Colab) o colócalos en la carpeta `archive/`."),
-    code("""
+        md("## 1. Dependencias"),
+        code("%pip install -q dash plotly pandas"),
+        md("## 2. Datos\nSi no están en `archive/` ni en `/content`, se piden con el diálogo de carga de Colab."),
+        code("""
 from pathlib import Path
 
 DATA_DIR = next((p for p in (Path("archive"), Path("/content")) if (p / "titles.csv").exists()), None)
 if DATA_DIR is None:
-    from google.colab import files
-    files.upload()
+    from google.colab import files  # solo disponible en Colab
+
+    files.upload()  # seleccionar titles.csv y credits.csv
     DATA_DIR = Path(".")
 print("Datos en:", DATA_DIR.resolve())
 """),
-    md("## 3. Módulos\nCada celda escribe un módulo del paquete `hbo_max_dashboard` (capas `data`, `logic` y `views`)."),
-]
-cells.append(code("from pathlib import Path\n\nfor sub in ('', 'data', 'logic', 'views'):\n    Path('hbo_max_dashboard', sub).mkdir(parents=True, exist_ok=True)"))
-for name in MODULES:
-    body = (PKG / f"{name}.py").read_text()
-    cells.append(code(f"%%writefile hbo_max_dashboard/{name}.py\n{body}"))
-cells += [
-    md("## 4. Ejecutar el dashboard"),
-    code("""
+    ]
+
+
+def module_cells() -> list[dict]:
+    dirs = sorted({p.parent.relative_to(PKG).as_posix() for p in package_modules()})
+    mkdir = "from pathlib import Path\n\nfor sub in " + repr(tuple(d for d in dirs if d != ".")) + ":\n"
+    mkdir += '    Path("hbo_max_dashboard", sub).mkdir(parents=True, exist_ok=True)'
+    cells = [
+        md("## 3. Código del proyecto\nCada celda escribe un módulo del paquete `hbo_max_dashboard`."),
+        code(mkdir),
+    ]
+    for module in package_modules():
+        rel = module.relative_to(PKG).as_posix()
+        cells.append(code(f"%%writefile hbo_max_dashboard/{rel}\n{module.read_text()}"))
+    return cells
+
+
+def processing_cells() -> list[dict]:
+    return [
+        md("## 4. Procesamiento de los datos\n### Datos crudos"),
+        code("""
+from hbo_max_dashboard.data.cleaning import missing_report
+from hbo_max_dashboard.data.repository import read_csv
+
+raw_titles = read_csv("titles", DATA_DIR)
+raw_credits = read_csv("credits", DATA_DIR)
+print(f"titles: {raw_titles.shape}   credits: {raw_credits.shape}")
+raw_titles.head(3)
+"""),
+        md("### Valores faltantes"),
+        code("missing_report(raw_titles)"),
+        md("""
+### Limpieza aplicada (`data/cleaning.py`)
+- `genres` y `production_countries` vienen como texto (`"['drama', 'crime']"`): se convierten en listas y los géneros se traducen al español.
+- `type` (MOVIE/SHOW) se traduce a `tipo` (Película/Serie) y se deriva la `decada` de estreno.
+- `age_certification` faltante se marca como `Sin dato`.
+- Se eliminan títulos y créditos duplicados.
+- Las puntuaciones IMDb solo se promedian para títulos con al menos 1.000 votos, y los grupos con menos de 10 títulos (o décadas con menos de 20) se omiten para evitar promedios poco confiables.
+"""),
+        code("""
+from hbo_max_dashboard.data import load_catalog
+
+catalog = load_catalog(DATA_DIR)
+print(f"Títulos: {len(catalog.titles)} (duplicados eliminados: {len(raw_titles) - len(catalog.titles)})")
+print(f"Créditos: {len(catalog.credits)} (duplicados eliminados: {len(raw_credits) - len(catalog.credits)})")
+catalog.titles[["title", "tipo", "release_year", "decada", "genres", "imdb_score"]].head()
+"""),
+    ]
+
+
+def analysis_cells() -> list[dict]:
+    cells = [
+        md("## 5. Análisis: preguntas y hallazgos\nCada gráfica responde una pregunta sobre el catálogo completo."),
+        code("""
+from hbo_max_dashboard.views.charts import CHARTS
+
+
+def show(chart_id: str) -> None:
+    spec = next(c for c in CHARTS if c.id == chart_id)
+    spec.render(catalog.titles, catalog.credits).show()
+"""),
+    ]
+    for i, spec in enumerate(CHARTS, 1):
+        cells += [
+            md(f"### 5.{i} {spec.title}\n**Pregunta:** {spec.question}"),
+            code(f'show("{spec.id}")'),
+            md(f"**Hallazgo:** {spec.insight}"),
+        ]
+    return cells
+
+
+def closing_cells() -> list[dict]:
+    return [
+        md("""
+## 6. Conclusiones
+- HBO Max combina dos catálogos: una biblioteca de clásicos (30 % anterior al año 2000) y una oferta reciente cada vez más centrada en series y documentales.
+- La calidad percibida depende más del nicho que del volumen: historia, documental y bélico superan a comedia, acción y terror.
+- Las producciones antiguas puntúan más alto por sesgo de supervivencia, no porque el cine antiguo sea mejor en sí mismo.
+- La popularidad no predice la calidad, y lo mejor valorado de la plataforma son sus series originales de HBO.
+- Por número de apariciones, el catálogo lo definen los autores clásicos y los actores de doblaje de animación, no las estrellas de Hollywood.
+"""),
+        md("## 7. Dashboard interactivo\nLos filtros de tipo, género y año recalculan los KPIs y las 10 gráficas."),
+        code("""
 from hbo_max_dashboard.app import create_app
 
 app = create_app(DATA_DIR)
-app.run(jupyter_mode="inline", height=1400, debug=False)
+app.run(jupyter_mode="inline", height=2600, debug=False)
 """),
-]
+    ]
 
-nb = {"cells": cells, "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"}},
-      "nbformat": 4, "nbformat_minor": 5}
-out = ROOT / "dashboard_hbo_max.ipynb"
-out.write_text(json.dumps(nb, indent=1, ensure_ascii=False))
-print("Escrito", out)
+
+def main() -> None:
+    cells = header_cells() + module_cells() + processing_cells() + analysis_cells() + closing_cells()
+    for i, cell in enumerate(cells):
+        cell["id"] = f"cell-{i:03d}"  # ids estables: regenerar no produce diffs innecesarios
+    notebook = {
+        "cells": cells,
+        "metadata": {
+            "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
+            "language_info": {"name": "python"},
+        },
+        "nbformat": 4,
+        "nbformat_minor": 5,
+    }
+    OUT.write_text(json.dumps(notebook, indent=1, ensure_ascii=False) + "\n")
+    print(f"Escrito {OUT.relative_to(ROOT)} ({len(cells)} celdas)")
+
+
+if __name__ == "__main__":
+    main()

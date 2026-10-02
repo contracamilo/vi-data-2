@@ -1,20 +1,37 @@
-# Dashboard HBO Max (Dash)
+# HBO Max · Películas y Series (Dash)
 
-Actividad 4 - Visualización de datos, Universidad de La Salle. Dashboard interactivo con Python, Dash y Plotly sobre el catálogo de HBO Max (`archive/titles.csv`, `archive/credits.csv`).
+Actividad 4 de Visualización de datos, Universidad de La Salle. Dashboard interactivo con Python, Dash y Plotly sobre el
+catálogo de HBO Max en EE. UU. (JustWatch, mayo de 2022): `archive/titles.csv` y `archive/credits.csv`.
+
+## Qué responde
+
+Diez visualizaciones, cada una ligada a una pregunta de análisis: composición del catálogo por década, evolución de los
+géneros, cantidad vs. calidad por género, IMDb por década (sesgo de supervivencia), duración de las películas,
+popularidad vs. calidad, títulos mejor valorados, temporadas vs. calidad, directores y actores más presentes. Filtros por
+tipo, género y año recalculan cinco KPIs y todas las gráficas.
 
 ## Arquitectura
 
 ```
 src/hbo_max_dashboard/
-├── config.py          constantes de dominio (rutas, etiquetas, límites)
-├── data/              CAPA DE DATOS: leer CSV y limpiarlos (repository, cleaning)
-├── logic/             LÓGICA: filtros y métricas puras sobre DataFrames (sin Dash/Plotly)
-├── views/             VISTAS: tema, figuras Plotly, layout y callbacks de Dash
-└── app.py             composición: carga datos -> arma layout -> registra callbacks
+├── config.py          constantes de dominio (etiquetas, umbrales)
+├── data/              CAPA DE DATOS: repository (lee CSV) · cleaning (limpia) · catalog (modelo Catalog)
+├── logic/             LÓGICA: filters (Filters) · metrics (KPIs y agregaciones), funciones puras sin Dash/Plotly
+├── views/             VISTAS
+│   ├── charts.py      catálogo de gráficas: pregunta + métrica + figura (fuente única de verdad)
+│   ├── kpis.py        KPIs de cabecera y formato en español
+│   ├── figures.py     primitivas Plotly con el tema
+│   ├── components.py  tarjetas y grillas
+│   ├── layout.py      estructura de la página
+│   └── callbacks.py   filtros -> KPIs + figuras
+└── app.py             composición
 ```
 
-La dependencia solo apunta hacia abajo: `views -> logic`, y `app` une `data` con `views`.
-`data` y `logic` no importan Dash ni Plotly (lo verifica `tests/test_logic.py`), así que se prueban sin interfaz.
+- La dependencia apunta en un solo sentido: `views -> logic -> (DataFrames)`, y `app` conecta `data` con `views`.
+  Un test verifica que `data` y `logic` no importan Dash ni Plotly.
+- `views/charts.py` alimenta el layout, el callback y el notebook: agregar una gráfica es agregar un `ChartSpec`.
+- El notebook entregable se **genera** desde `src/` con `tools/build_notebook.py` (no se edita a mano). La CI falla si
+  quedó desactualizado.
 
 ## Configuración
 
@@ -27,9 +44,10 @@ pip install -r requirements.txt
 ## Uso
 
 ```bash
-python -m hbo_max_dashboard   # servidor en http://127.0.0.1:8050
-pytest                        # tests
-python tools/build_notebook.py   # regenera dashboard_hbo_max.ipynb (entregable para Colab)
+python -m hbo_max_dashboard        # servidor en http://127.0.0.1:8050 (DASH_DEBUG=0 para desactivar debug)
+pytest                             # tests
+ruff check . && ruff format .      # lint y formato
+python tools/build_notebook.py     # regenera dashboard_hbo_max.ipynb
 ```
 
-El notebook `dashboard_hbo_max.ipynb` se genera a partir de `src/`; no se edita a mano.
+En Colab: subir `dashboard_hbo_max.ipynb`, ejecutar todo y subir los dos CSV cuando se pidan.

@@ -1,29 +1,23 @@
-"""Controlador: conecta los filtros con métricas y figuras."""
-import pandas as pd
+"""Controlador: traduce los filtros de la UI en KPIs y figuras."""
+
 from dash import Dash, Input, Output
 
-from ..logic import filters, metrics
-from . import figures
-from .layout import CHARTS
+from ..data import Catalog
+from ..logic import metrics
+from ..logic.filters import Filters
+from .charts import CHARTS
+from .kpis import KPIS
+from .layout import FILTER_GENRE, FILTER_TYPE, FILTER_YEARS
 
-FILTERS = [Input("f-type", "value"), Input("f-genre", "value"), Input("f-years", "value")]
-KPI_IDS = ["k-total", "k-movies", "k-shows", "k-imdb"]
 
-
-def register_callbacks(app: Dash, titles: pd.DataFrame, credits: pd.DataFrame) -> None:
-    @app.callback([Output(k, "children") for k in KPI_IDS] + [Output(cid, "figure") for cid, _ in CHARTS], FILTERS)
+def register_callbacks(app: Dash, catalog: Catalog) -> None:
+    @app.callback(
+        [Output(spec.id, "children") for spec in KPIS] + [Output(spec.id, "figure") for spec in CHARTS],
+        Input(FILTER_TYPE, "value"),
+        Input(FILTER_GENRE, "value"),
+        Input(FILTER_YEARS, "value"),
+    )
     def update(types, genre, years):
-        df = filters.filter_titles(titles, types or [], genre, tuple(years))
-        k = metrics.kpis(df)
-        imdb = "–" if pd.isna(k["imdb_mean"]) else f"{k['imdb_mean']:.2f}"
-        return (
-            f"{k['total']:,}", f"{k['movies']:,}", f"{k['shows']:,}", imdb,
-            figures.year_histogram(df),
-            figures.genres_bar(df),
-            figures.runtime_scatter(df),
-            figures.countries_bar(df),
-            figures.people_bar(df, credits, "ACTOR", "Actores con más títulos"),
-            figures.people_bar(df, credits, "DIRECTOR", "Directores con más títulos"),
-            figures.certification_donut(df),
-            figures.imdb_genre_bar(df),
-        )
+        selection = Filters.from_inputs(types, genre, years).apply(catalog.titles)
+        values = metrics.kpis(selection)
+        return [spec.format(values) for spec in KPIS] + [spec.render(selection, catalog.credits) for spec in CHARTS]
