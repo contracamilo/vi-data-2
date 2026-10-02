@@ -2,7 +2,7 @@
 
 from dash import dcc, html
 
-from ..config import ALL_GENRES, TYPE_LABELS
+from ..config import ALL_GENRES, DATASET_URL, TYPE_LABELS
 from .charts import CHARTS
 from .components import chart_card, filter_card, grid, kpi_card, theme_toggle
 from .kpis import KPIS
@@ -87,5 +87,17 @@ def build_layout(genres: list[str], year_bounds: tuple[int, int]) -> html.Div:
             _filters(genres, year_bounds),
             grid([kpi_card(spec) for spec in KPIS], min_width=180),
             grid([chart_card(spec) for spec in CHARTS], min_width=520),
+            _footer(),
         ],
+    )
+
+
+def _footer() -> html.Footer:
+    return html.Footer(
+        [
+            "Datos: ",
+            html.A("HBO Max TV Shows and Movies", href=DATASET_URL, target="_blank", style={"color": "var(--primary)"}),
+            " (Victor Soeiro, Kaggle), obtenidos de JustWatch · mayo de 2022 · catálogo de EE. UU.",
+        ],
+        style={"color": "var(--muted)", "fontSize": "13px", "textAlign": "center", "padding": "8px 0"},
     )

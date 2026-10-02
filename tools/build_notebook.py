@@ -47,8 +47,10 @@ def header_cells() -> list[dict]:
 # HBO Max · Películas y Series
 **Actividad 4 · Mi primer prototipo de dashboard** — Visualización de datos, Universidad de La Salle.
 
-**Dataset:** catálogo de HBO Max en EE. UU. (JustWatch, mayo de 2022, Kaggle): `titles.csv` con más de 3.000 títulos
-y `credits.csv` con más de 66.000 créditos de actores y directores.
+**Dataset:** [HBO Max TV Shows and Movies](https://www.kaggle.com/datasets/victorsoeiro/hbo-max-tv-shows-and-movies)
+(Victor Soeiro, Kaggle), con datos de [JustWatch](https://www.justwatch.com/) del catálogo de EE. UU. en mayo de 2022:
+`titles.csv` con más de 3.000 títulos y `credits.csv` con más de 66.000 créditos de actores y directores.
+Las puntuaciones provienen de IMDb y TMDB.
 
 **Preguntas que responde este análisis:**
 

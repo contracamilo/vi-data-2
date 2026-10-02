@@ -3,6 +3,12 @@
 Actividad 4 de Visualización de datos, Universidad de La Salle. Dashboard interactivo con Python, Dash y Plotly sobre el
 catálogo de HBO Max en EE. UU. (JustWatch, mayo de 2022): `archive/titles.csv` y `archive/credits.csv`.
 
+## Datos y créditos
+
+Dataset [HBO Max TV Shows and Movies](https://www.kaggle.com/datasets/victorsoeiro/hbo-max-tv-shows-and-movies),
+publicado en Kaggle por Victor Soeiro. Los datos fueron obtenidos de [JustWatch](https://www.justwatch.com/) en mayo de
+2022 y corresponden al catálogo disponible en Estados Unidos. Las puntuaciones provienen de IMDb y TMDB.
+
 ## Qué responde
 
 Diez visualizaciones, cada una ligada a una pregunta de análisis: composición del catálogo por década, evolución de los

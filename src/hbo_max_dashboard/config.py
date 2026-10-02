@@ -35,3 +35,5 @@ MIN_GROUP_SIZE = 10  # tamaño mínimo de un grupo para que su promedio sea conf
 MIN_DECADE_SIZE = 20  # décadas con menos títulos se omiten en las series temporales
 MIN_VOTES = 1_000  # votos mínimos para usar la puntuación IMDb de un título
 TOP_RATED_MIN_VOTES = 10_000
+
+DATASET_URL = "https://www.kaggle.com/datasets/victorsoeiro/hbo-max-tv-shows-and-movies"
