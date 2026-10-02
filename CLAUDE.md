@@ -6,13 +6,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 A university assignment (Universidad de La Salle, "Actividad 4. Mi primer prototipo de dashboard", due 2026-10-04), not a software project. There is no code, build system, tests or git repo yet. The goal is a Python **Dash** dashboard built on a dataset from Kaggle or Datos Abiertos de Colombia.
 
-Requirements from the assignment PDF in this folder:
+Requirements from the assignment PDF (kept outside the repo, in `../vi-data-2-material/`):
 - Minimum **6 visualizations** that are relevant, legible and coherent with the data.
 - **Filters / interactive elements** (Dash callbacks).
 - Basic data processing/cleaning before visualizing.
 - Visualizations should answer meaningful questions about the dataset (the heaviest grading criterion, 2.5 of 5 points).
 - Deliverables: a **notebook (.ipynb)** run in Google Colab, plus a video of at most 5 minutes explaining the dashboard. The notebook is the deliverable, so keep the dashboard self-contained in it (including how it loads the CSVs).
-- `dashboardProfe.png` is a screenshot of the instructor's example dashboard, useful as a layout reference.
+- `../vi-data-2-material/dashboardProfe.png` is a screenshot of the instructor's example dashboard, useful as a layout reference.
 
 ## Reference dashboard (instructor's example)
 
