@@ -4,15 +4,35 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-A university assignment (Universidad de La Salle, "Actividad 4. Mi primer prototipo de dashboard", due 2026-10-04), not a software project. There is no code, build system, tests or git repo yet. The goal is a Python **Dash** dashboard built on a dataset from Kaggle or Datos Abiertos de Colombia.
+A university assignment (Universidad de La Salle, "Actividad 4. Mi primer prototipo de dashboard", due 2026-10-04), not a software project. The repo is `contracamilo/vi-data-2` on GitHub (private). The goal is a Python **Dash** dashboard built on a dataset from Kaggle or Datos Abiertos de Colombia.
 
 Requirements from the assignment PDF (kept outside the repo, in `../vi-data-2-material/`):
 - Minimum **6 visualizations** that are relevant, legible and coherent with the data.
 - **Filters / interactive elements** (Dash callbacks).
 - Basic data processing/cleaning before visualizing.
 - Visualizations should answer meaningful questions about the dataset (the heaviest grading criterion, 2.5 of 5 points).
-- Deliverables: a **notebook (.ipynb)** run in Google Colab, plus a video of at most 5 minutes explaining the dashboard. The notebook is the deliverable, so keep the dashboard self-contained in it (including how it loads the CSVs).
+- Deliverables: a **notebook (.ipynb)** run in Google Colab, plus a video of at most 5 minutes explaining the dashboard. The notebook is self-contained and generated from `src/` (see Architecture); in Colab the user uploads the CSVs.
 - `../vi-data-2-material/dashboardProfe.png` is a screenshot of the instructor's example dashboard, useful as a layout reference.
+
+## Commands
+
+```bash
+source .venv/bin/activate && pip install -r requirements.txt   # setup (editable install)
+python -m netflix_dashboard                                    # run the dashboard (port 8050)
+pytest                                                         # all tests
+pytest tests/test_logic.py::test_kpis_are_consistent           # single test
+python tools/build_notebook.py                                 # regenerate dashboard_netflix.ipynb
+```
+
+## Architecture
+
+Package in `src/netflix_dashboard/` with three layers; dependencies point only downward (enforced by a test):
+- `data/`: `repository.py` reads CSVs (only module touching disk), `cleaning.py` parses list columns and normalizes. No Dash/Plotly.
+- `logic/`: `filters.py` (selection rules) and `metrics.py` (KPIs and aggregations), pure functions on DataFrames. No Dash/Plotly.
+- `views/`: `theme.py`, `figures.py` (one Plotly figure per function), `layout.py`, `callbacks.py` (single callback: filters -> 4 KPIs + 8 figures). `layout.CHARTS` and the callback outputs must stay in the same order.
+- `app.py` composes them; `config.py` holds domain constants.
+
+The `.ipynb` deliverable is **generated** by `tools/build_notebook.py`, which embeds every module as a `%%writefile` cell. Never edit the notebook by hand. When adding or moving a module, update `MODULES` in that script.
 
 ## Reference dashboard (instructor's example)
 
@@ -27,7 +47,7 @@ The example has visible bugs to avoid: the "Títulos" KPI shows 0, and the Pelí
 ## Data (`archive/`)
 
 A Netflix-style titles/credits dataset (Kaggle):
-- `titles.csv` (~3.4k rows): `id, title, type (MOVIE|SHOW), description, release_year, age_certification, runtime, genres, production_countries, seasons, imdb_id, imdb_score, imdb_votes, tmdb_popularity, tmdb_score`.
+- `titles.csv` (~3.3k rows): `id, title, type (MOVIE|SHOW), description, release_year, age_certification, runtime, genres, production_countries, seasons, imdb_id, imdb_score, imdb_votes, tmdb_popularity, tmdb_score`.
 - `credits.csv` (~66k rows): `person_id, id, name, character, role (ACTOR|DIRECTOR)`. It joins to titles on `id`.
 
 Gotchas for processing:

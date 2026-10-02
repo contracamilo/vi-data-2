@@ -1,0 +1,12 @@
+Metadata-Version: 2.4
+Name: netflix-dashboard
+Version: 0.1.0
+Summary: Dashboard interactivo del catálogo de Netflix con Dash
+Requires-Python: >=3.10
+Requires-Dist: dash>=2.17
+Requires-Dist: plotly>=5.22
+Requires-Dist: pandas>=2.2
+Provides-Extra: dev
+Requires-Dist: pytest; extra == "dev"
+Requires-Dist: jupyter; extra == "dev"
+Requires-Dist: ipykernel; extra == "dev"
