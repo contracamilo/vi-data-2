@@ -3,9 +3,9 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "netflix-dashboard"
+name = "hbo-max-dashboard"
 version = "0.1.0"
-description = "Dashboard interactivo del catálogo de Netflix con Dash"
+description = "Dashboard interactivo del catálogo de HBO Max con Dash"
 requires-python = ">=3.10"
 dependencies = ["dash>=2.17", "plotly>=5.22", "pandas>=2.2"]
 

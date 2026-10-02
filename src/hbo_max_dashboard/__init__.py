@@ -1,4 +1,4 @@
-"""Dashboard interactivo del catálogo de Netflix.
+"""Dashboard interactivo del catálogo de HBO Max.
 
 Capas (la dependencia solo apunta hacia abajo):
     views  ->  logic      (Dash/Plotly; filtros y métricas)

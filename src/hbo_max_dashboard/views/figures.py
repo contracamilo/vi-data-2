@@ -4,7 +4,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 
 from ..logic import metrics
-from .theme import BG, CARD, MUTED, PALETTE, RED, TEXT
+from .theme import BG, CARD, MUTED, PALETTE, PRIMARY, TEXT
 
 
 def _style(fig: go.Figure, title: str) -> go.Figure:
@@ -33,7 +33,7 @@ def empty_figure(title: str) -> go.Figure:
 def _bar_h(data: pd.DataFrame, y: str, x: str, title: str, xlabel: str) -> go.Figure:
     if data.empty:
         return empty_figure(title)
-    fig = px.bar(data.iloc[::-1], x=x, y=y, orientation="h", color_discrete_sequence=[RED])
+    fig = px.bar(data.iloc[::-1], x=x, y=y, orientation="h", color_discrete_sequence=[PRIMARY])
     fig.update_layout(xaxis_title=xlabel, yaxis_title=None)
     return _style(fig, title)
 
@@ -70,7 +70,7 @@ def countries_bar(df: pd.DataFrame) -> go.Figure:
     title = "Top 10 países productores"
     if data.empty:
         return empty_figure(title)
-    fig = px.bar(data, x="pais", y="titulos", color_discrete_sequence=[RED])
+    fig = px.bar(data, x="pais", y="titulos", color_discrete_sequence=[PRIMARY])
     fig.update_layout(xaxis_title="País", yaxis_title="Títulos")
     return _style(fig, title)
 
@@ -85,7 +85,7 @@ def certification_donut(df: pd.DataFrame) -> go.Figure:
     if data.empty:
         return empty_figure(title)
     fig = px.pie(data, names="clasificacion", values="titulos", hole=0.5,
-                 color_discrete_sequence=px.colors.sequential.Reds_r)
+                 color_discrete_sequence=px.colors.sequential.Purples_r)
     fig.update_traces(textinfo="percent", marker=dict(line=dict(color=BG, width=1)))
     return _style(fig, title)
 

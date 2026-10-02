@@ -18,15 +18,15 @@ Requirements from the assignment PDF (kept outside the repo, in `../vi-data-2-ma
 
 ```bash
 source .venv/bin/activate && pip install -r requirements.txt   # setup (editable install)
-python -m netflix_dashboard                                    # run the dashboard (port 8050)
+python -m hbo_max_dashboard                                    # run the dashboard (port 8050)
 pytest                                                         # all tests
 pytest tests/test_logic.py::test_kpis_are_consistent           # single test
-python tools/build_notebook.py                                 # regenerate dashboard_netflix.ipynb
+python tools/build_notebook.py                                 # regenerate dashboard_hbo_max.ipynb
 ```
 
 ## Architecture
 
-Package in `src/netflix_dashboard/` with three layers; dependencies point only downward (enforced by a test):
+Package in `src/hbo_max_dashboard/` with three layers; dependencies point only downward (enforced by a test):
 - `data/`: `repository.py` reads CSVs (only module touching disk), `cleaning.py` parses list columns and normalizes. No Dash/Plotly.
 - `logic/`: `filters.py` (selection rules) and `metrics.py` (KPIs and aggregations), pure functions on DataFrames. No Dash/Plotly.
 - `views/`: `theme.py`, `figures.py` (one Plotly figure per function), `layout.py`, `callbacks.py` (single callback: filters -> 4 KPIs + 8 figures). `layout.CHARTS` and the callback outputs must stay in the same order.
@@ -36,7 +36,7 @@ The `.ipynb` deliverable is **generated** by `tools/build_notebook.py`, which em
 
 ## Reference dashboard (instructor's example)
 
-Same Netflix dataset, dark theme with red accents (Plotly dark template, `#E50914`-style red). Layout, top to bottom:
+The example was built on this same dataset (the screenshot is branded Netflix, but the data is HBO Max). Our version uses a dark purple HBO Max theme (`views/theme.py`). The slider range comes from the data (~30% of titles predate 2000). Layout, top to bottom:
 - Title and subtitle.
 - Filter row: Tipo (checklist: Película/Serie), Género (dropdown, "Todos los géneros"), Año de estreno (RangeSlider, 2000-2022).
 - KPI row: Títulos, Películas, Series, IMDb promedio.
@@ -46,7 +46,7 @@ The example has visible bugs to avoid: the "Títulos" KPI shows 0, and the Pelí
 
 ## Data (`archive/`)
 
-A Netflix-style titles/credits dataset (Kaggle):
+HBO Max catalog (JustWatch, US, May 2022; Kaggle) titles/credits:
 - `titles.csv` (~3.3k rows): `id, title, type (MOVIE|SHOW), description, release_year, age_certification, runtime, genres, production_countries, seasons, imdb_id, imdb_score, imdb_votes, tmdb_popularity, tmdb_score`.
 - `credits.csv` (~66k rows): `person_id, id, name, character, role (ACTOR|DIRECTOR)`. It joins to titles on `id`.
 

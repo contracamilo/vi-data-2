@@ -1,11 +1,11 @@
-# Dashboard Netflix (Dash)
+# Dashboard HBO Max (Dash)
 
-Actividad 4 - Visualización de datos, Universidad de La Salle. Dashboard interactivo con Python, Dash y Plotly sobre el catálogo de Netflix (`archive/titles.csv`, `archive/credits.csv`).
+Actividad 4 - Visualización de datos, Universidad de La Salle. Dashboard interactivo con Python, Dash y Plotly sobre el catálogo de HBO Max (`archive/titles.csv`, `archive/credits.csv`).
 
 ## Arquitectura
 
 ```
-src/netflix_dashboard/
+src/hbo_max_dashboard/
 ├── config.py          constantes de dominio (rutas, etiquetas, límites)
 ├── data/              CAPA DE DATOS: leer CSV y limpiarlos (repository, cleaning)
 ├── logic/             LÓGICA: filtros y métricas puras sobre DataFrames (sin Dash/Plotly)
@@ -27,9 +27,9 @@ pip install -r requirements.txt
 ## Uso
 
 ```bash
-python -m netflix_dashboard   # servidor en http://127.0.0.1:8050
+python -m hbo_max_dashboard   # servidor en http://127.0.0.1:8050
 pytest                        # tests
-python tools/build_notebook.py   # regenera dashboard_netflix.ipynb (entregable para Colab)
+python tools/build_notebook.py   # regenera dashboard_hbo_max.ipynb (entregable para Colab)
 ```
 
-El notebook `dashboard_netflix.ipynb` se genera a partir de `src/`; no se edita a mano.
+El notebook `dashboard_hbo_max.ipynb` se genera a partir de `src/`; no se edita a mano.

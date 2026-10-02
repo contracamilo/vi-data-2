@@ -1,8 +1,8 @@
 import pytest
 
-from netflix_dashboard.data import load_credits, load_titles
-from netflix_dashboard.logic import filters, metrics
-from netflix_dashboard.config import ALL_GENRES
+from hbo_max_dashboard.data import load_credits, load_titles
+from hbo_max_dashboard.logic import filters, metrics
+from hbo_max_dashboard.config import ALL_GENRES
 
 
 @pytest.fixture(scope="module")
@@ -38,7 +38,7 @@ def test_kpis_are_consistent(titles):
 
 
 def test_empty_selection_does_not_break(titles, credits):
-    df = filters.filter_titles(titles, [], ALL_GENRES, (2000, 2022))
+    df = filters.filter_titles(titles, [], ALL_GENRES, (1900, 2022))
     assert metrics.kpis(df)["total"] == 0
     assert metrics.top_genres(df).empty
     assert metrics.top_people(df, credits, "ACTOR").empty
@@ -46,7 +46,7 @@ def test_empty_selection_does_not_break(titles, credits):
 
 
 def test_top_people_respects_filter(titles, credits):
-    df = filters.filter_titles(titles, ["Película"], ALL_GENRES, (2000, 2022))
+    df = filters.filter_titles(titles, ["Película"], ALL_GENRES, (1900, 2022))
     top = metrics.top_people(df, credits, "ACTOR", n=5)
     assert len(top) == 5 and top["titulos"].is_monotonic_decreasing
 
@@ -54,8 +54,8 @@ def test_top_people_respects_filter(titles, credits):
 def test_logic_and_data_layers_do_not_import_ui():
     import pathlib
 
-    root = pathlib.Path(__file__).resolve().parents[1] / "src" / "netflix_dashboard"
+    root = pathlib.Path(__file__).resolve().parents[1] / "src" / "hbo_max_dashboard"
     for layer in ("logic", "data"):
         for f in (root / layer).glob("*.py"):
             src = f.read_text()
-            assert "dash" not in src.replace("netflix_dashboard", "") and "plotly" not in src, f
+            assert "dash" not in src.replace("hbo_max_dashboard", "") and "plotly" not in src, f

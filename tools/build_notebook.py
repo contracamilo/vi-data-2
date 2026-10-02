@@ -1,10 +1,10 @@
-"""Genera `dashboard_netflix.ipynb` a partir del paquete en src/, para entregarlo
+"""Genera `dashboard_hbo_max.ipynb` a partir del paquete en src/, para entregarlo
 como notebook autocontenido (Colab). Ejecutar: python tools/build_notebook.py"""
 import json
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-PKG = ROOT / "src" / "netflix_dashboard"
+PKG = ROOT / "src" / "hbo_max_dashboard"
 MODULES = [
     "__init__", "config",
     "data/__init__", "data/cleaning", "data/repository",
@@ -25,8 +25,8 @@ def code(text):
 
 cells = [
     md("""
-# Dashboard Netflix · Películas y Series
-Dashboard interactivo (Dash + Plotly) sobre el catálogo de Netflix.
+# Dashboard HBO Max · Películas y Series
+Dashboard interactivo (Dash + Plotly) sobre el catálogo de HBO Max.
 El código está separado en tres capas: **datos** (`data`: lectura y limpieza), **lógica** (`logic`: filtros y métricas) y **vistas** (`views`: layout, figuras y callbacks).
 """),
     md("## 1. Dependencias"),
@@ -42,16 +42,16 @@ if DATA_DIR is None:
     DATA_DIR = Path(".")
 print("Datos en:", DATA_DIR.resolve())
 """),
-    md("## 3. Módulos\nCada celda escribe un módulo del paquete `netflix_dashboard` (capas `data`, `logic` y `views`)."),
+    md("## 3. Módulos\nCada celda escribe un módulo del paquete `hbo_max_dashboard` (capas `data`, `logic` y `views`)."),
 ]
-cells.append(code("from pathlib import Path\n\nfor sub in ('', 'data', 'logic', 'views'):\n    Path('netflix_dashboard', sub).mkdir(parents=True, exist_ok=True)"))
+cells.append(code("from pathlib import Path\n\nfor sub in ('', 'data', 'logic', 'views'):\n    Path('hbo_max_dashboard', sub).mkdir(parents=True, exist_ok=True)"))
 for name in MODULES:
     body = (PKG / f"{name}.py").read_text()
-    cells.append(code(f"%%writefile netflix_dashboard/{name}.py\n{body}"))
+    cells.append(code(f"%%writefile hbo_max_dashboard/{name}.py\n{body}"))
 cells += [
     md("## 4. Ejecutar el dashboard"),
     code("""
-from netflix_dashboard.app import create_app
+from hbo_max_dashboard.app import create_app
 
 app = create_app(DATA_DIR)
 app.run(jupyter_mode="inline", height=1400, debug=False)
@@ -60,6 +60,6 @@ app.run(jupyter_mode="inline", height=1400, debug=False)
 
 nb = {"cells": cells, "metadata": {"kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"}},
       "nbformat": 4, "nbformat_minor": 5}
-out = ROOT / "dashboard_netflix.ipynb"
+out = ROOT / "dashboard_hbo_max.ipynb"
 out.write_text(json.dumps(nb, indent=1, ensure_ascii=False))
 print("Escrito", out)

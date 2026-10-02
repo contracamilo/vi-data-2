@@ -13,3 +13,7 @@ def filter_titles(titles: pd.DataFrame, types: list[str], genre: str, years: tup
 
 def genre_options(titles: pd.DataFrame) -> list[str]:
     return sorted(titles["genres"].explode().dropna().unique())
+
+
+def year_bounds(titles: pd.DataFrame) -> tuple[int, int]:
+    return int(titles["release_year"].min()), int(titles["release_year"].max())
