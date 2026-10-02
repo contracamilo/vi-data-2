@@ -1,36 +1,66 @@
-"""Primitivas de gráficas Plotly con el tema del dashboard.
+"""Primitivas de gráficas Plotly.
 
-Son funciones de presentación puras: reciben datos ya agregados y no conocen el dominio.
+Son funciones de presentación puras: reciben datos ya agregados y no conocen el dominio ni
+los colores. `apply_theme` pinta la figura terminada con el tema activo.
 """
 
 import pandas as pd
 import plotly.express as px
 import plotly.graph_objects as go
 
-from .theme import CARD, FONT, GRID, MUTED, PALETTE, PRIMARY, SEQUENTIAL, TEXT
+from .theme import FONT, Theme
 
 HEIGHT = 380
 
 
-def style(fig: go.Figure, title: str = "") -> go.Figure:
+def style(fig: go.Figure) -> go.Figure:
     fig.update_layout(
-        title=dict(text=title, font=dict(size=15, color=TEXT), x=0.02, y=0.97),
-        paper_bgcolor=CARD,
-        plot_bgcolor=CARD,
-        font=dict(color=TEXT, family=FONT),
+        font=dict(family=FONT),
         margin=dict(l=10, r=10, t=50, b=10),
         legend=dict(title=None, orientation="h", y=1.0, yanchor="bottom", x=1, xanchor="right"),
         hoverlabel=dict(font=dict(family=FONT)),
         height=HEIGHT,
     )
-    fig.update_xaxes(gridcolor=GRID, zeroline=False)
-    fig.update_yaxes(gridcolor=GRID, zeroline=False)
+    fig.update_xaxes(zeroline=False)
+    fig.update_yaxes(zeroline=False)
+    return fig
+
+
+# Trazas que pintamos con un color sólido. Plotly usa `scattergl` en lugar de `scatter` con muchos puntos.
+SOLID_TRACES = ("bar", "scatter", "scattergl", "box")
+
+
+def apply_theme(fig: go.Figure, theme: Theme, title: str = "") -> go.Figure:
+    """Aplica colores del tema: fondo, textos, grilla, escala continua y series por nombre."""
+    fig.update_layout(
+        title=dict(text=title, font=dict(size=15, color=theme.text), x=0.02, y=0.97),
+        paper_bgcolor=theme.card,
+        plot_bgcolor=theme.card,
+        font=dict(color=theme.text),
+    )
+    # el heatmap usa la escala completa; en los demás el tono más bajo se confundiría con el fondo
+    has_heatmap = any(trace.type == "heatmap" for trace in fig.data)
+    fig.update_layout(coloraxis_colorscale=list(theme.sequential if has_heatmap else theme.sequential[1:]))
+    fig.update_xaxes(gridcolor=theme.border, linecolor=theme.border)
+    fig.update_yaxes(gridcolor=theme.border, linecolor=theme.border)
+    fig.update_annotations(font_color=theme.muted, bgcolor=theme.card)
+    for trace in fig.data:
+        if trace.type not in SOLID_TRACES:
+            continue
+        if trace.type in ("scatter", "scattergl") and trace.text is not None:
+            trace.textfont.color = theme.text
+        if getattr(trace.marker, "coloraxis", None):  # color continuo: lo define la escala del tema
+            continue
+        color = theme.palette.get(trace.name, theme.primary)  # series por nombre (Película/Serie)
+        trace.marker.color = color
+        if trace.type != "bar":
+            trace.line.color = color
     return fig
 
 
 def empty(message: str = "Sin datos para esta selección") -> go.Figure:
     fig = go.Figure()
-    fig.add_annotation(text=message, showarrow=False, font=dict(color=MUTED, size=14))
+    fig.add_annotation(text=message, showarrow=False, font=dict(size=14))
     fig.update_xaxes(visible=False)
     fig.update_yaxes(visible=False)
     return style(fig)
@@ -47,8 +77,7 @@ def note(fig: go.Figure, text: str) -> go.Figure:
         xanchor="right",
         yanchor="bottom",
         showarrow=False,
-        font=dict(color=MUTED, size=12),
-        bgcolor=CARD,
+        font=dict(size=12),
     )
     return fig
 
@@ -56,7 +85,7 @@ def note(fig: go.Figure, text: str) -> go.Figure:
 def stacked_bar(data: pd.DataFrame, x: str, y: str, color: str, labels: dict[str, str]) -> go.Figure:
     if data.empty:
         return empty()
-    fig = px.bar(data, x=x, y=y, color=color, color_discrete_map=PALETTE, labels=labels)
+    fig = px.bar(data, x=x, y=y, color=color, labels=labels)
     fig.update_layout(barmode="stack")
     return style(fig)
 
@@ -68,7 +97,6 @@ def heatmap(pivot: pd.DataFrame, xlabel: str, value_label: str) -> go.Figure:
         pivot,
         text_auto=".0f",
         aspect="auto",
-        color_continuous_scale=SEQUENTIAL,
         labels=dict(x=xlabel, y="", color=value_label),
     )
     fig.update_xaxes(type="category", showgrid=False)
@@ -88,10 +116,9 @@ def bubble(data: pd.DataFrame, x: str, y: str, size: str, text: str, labels: dic
         labels=labels,
         size_max=40,
         color=y,
-        color_continuous_scale=SEQUENTIAL[1:],
         hover_name=text,
     )
-    fig.update_traces(textposition="top center", textfont=dict(size=11, color=TEXT))
+    fig.update_traces(textposition="top center", textfont=dict(size=11))
     fig.update_layout(coloraxis_showscale=False)
     return style(fig)
 
@@ -99,7 +126,7 @@ def bubble(data: pd.DataFrame, x: str, y: str, size: str, text: str, labels: dic
 def line(data: pd.DataFrame, x: str, y: str, labels: dict[str, str], hover: list[str] | None = None) -> go.Figure:
     if data.empty:
         return empty()
-    fig = px.line(data, x=x, y=y, labels=labels, markers=True, hover_data=hover, color_discrete_sequence=[PRIMARY])
+    fig = px.line(data, x=x, y=y, labels=labels, markers=True, hover_data=hover)
     fig.update_traces(line=dict(width=3), marker=dict(size=8))
     return style(fig)
 
@@ -120,7 +147,6 @@ def scatter(
         x=x,
         y=y,
         color=color,
-        color_discrete_map=PALETTE,
         labels=labels,
         hover_name=hover_name,
         log_x=log_x,
@@ -142,31 +168,16 @@ def bar_h(
     """Barras horizontales con el primer elemento arriba. `color` puede ser categórico o numérico."""
     if data.empty:
         return empty()
-    data = data.iloc[::-1]
-    if color and pd.api.types.is_numeric_dtype(data[color]):
-        fig = px.bar(
-            data,
-            x=x,
-            y=y,
-            orientation="h",
-            labels=labels,
-            hover_data=hover,
-            color=color,
-            color_continuous_scale=SEQUENTIAL[1:],
-            range_color=range_color,
-        )
-    else:
-        fig = px.bar(
-            data,
-            x=x,
-            y=y,
-            orientation="h",
-            labels=labels,
-            hover_data=hover,
-            color=color,
-            color_discrete_map=PALETTE,
-            color_discrete_sequence=[PRIMARY],
-        )
+    fig = px.bar(
+        data.iloc[::-1],
+        x=x,
+        y=y,
+        orientation="h",
+        labels=labels,
+        hover_data=hover,
+        color=color,
+        range_color=range_color,
+    )
     fig.update_yaxes(title=None)
     return style(fig)
 
@@ -181,7 +192,6 @@ def box(data: pd.DataFrame, x: str, y: str, labels: dict[str, str], hover_name: 
         labels=labels,
         points="all",
         hover_name=hover_name,
-        color_discrete_sequence=[PRIMARY],
     )
     fig.update_traces(marker=dict(size=4, opacity=0.5), jitter=0.4)
     return style(fig)

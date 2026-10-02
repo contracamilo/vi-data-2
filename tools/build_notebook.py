@@ -14,6 +14,7 @@ ROOT = Path(__file__).resolve().parents[1]
 SRC = ROOT / "src"
 PKG = SRC / "hbo_max_dashboard"
 OUT = ROOT / "dashboard_hbo_max.ipynb"
+NB_PKG_ROOT = "_notebook_pkg"  # donde el notebook escribe el paquete (ignorado por git)
 
 sys.path.insert(0, str(SRC))
 from hbo_max_dashboard.views.charts import CHARTS  # noqa: E402
@@ -79,15 +80,24 @@ print("Datos en:", DATA_DIR.resolve())
 
 def module_cells() -> list[dict]:
     dirs = sorted({p.parent.relative_to(PKG).as_posix() for p in package_modules()})
-    mkdir = "from pathlib import Path\n\nfor sub in " + repr(tuple(d for d in dirs if d != ".")) + ":\n"
-    mkdir += '    Path("hbo_max_dashboard", sub).mkdir(parents=True, exist_ok=True)'
+    subdirs = ", ".join(f'"{d}"' for d in dirs if d != ".")
+    setup = f"""
+import sys
+from pathlib import Path
+
+# Carpeta aparte: si el notebook se ejecuta dentro del repo, no tapa al paquete de src/.
+PKG_ROOT = Path("{NB_PKG_ROOT}")
+for sub in ("", {subdirs}):
+    (PKG_ROOT / "hbo_max_dashboard" / sub).mkdir(parents=True, exist_ok=True)
+sys.path.insert(0, str(PKG_ROOT))
+"""
     cells = [
         md("## 3. Código del proyecto\nCada celda escribe un módulo del paquete `hbo_max_dashboard`."),
-        code(mkdir),
+        code(setup),
     ]
     for module in package_modules():
         rel = module.relative_to(PKG).as_posix()
-        cells.append(code(f"%%writefile hbo_max_dashboard/{rel}\n{module.read_text()}"))
+        cells.append(code(f"%%writefile {NB_PKG_ROOT}/hbo_max_dashboard/{rel}\n{module.read_text()}"))
     return cells
 
 
@@ -129,11 +139,12 @@ def analysis_cells() -> list[dict]:
         md("## 5. Análisis: preguntas y hallazgos\nCada gráfica responde una pregunta sobre el catálogo completo."),
         code("""
 from hbo_max_dashboard.views.charts import CHARTS
+from hbo_max_dashboard.views.theme import LIGHT  # tema claro para las figuras estáticas del informe
 
 
 def show(chart_id: str) -> None:
     spec = next(c for c in CHARTS if c.id == chart_id)
-    spec.render(catalog.titles, catalog.credits).show()
+    spec.render(catalog.titles, catalog.credits, LIGHT).show()
 """),
     ]
     for i, spec in enumerate(CHARTS, 1):
@@ -155,7 +166,9 @@ def closing_cells() -> list[dict]:
 - La popularidad no predice la calidad, y lo mejor valorado de la plataforma son sus series originales de HBO.
 - Por número de apariciones, el catálogo lo definen los autores clásicos y los actores de doblaje de animación, no las estrellas de Hollywood.
 """),
-        md("## 7. Dashboard interactivo\nLos filtros de tipo, género y año recalculan los KPIs y las 10 gráficas."),
+        md(
+            "## 7. Dashboard interactivo\nLos filtros de tipo, género y año recalculan los KPIs y las 10 gráficas. El botón de la esquina cambia entre modo día y noche."
+        ),
         code("""
 from hbo_max_dashboard.app import create_app
 

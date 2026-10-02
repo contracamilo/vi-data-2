@@ -13,6 +13,7 @@ import plotly.graph_objects as go
 
 from ..logic import metrics
 from . import figures
+from .theme import Theme
 
 Builder = Callable[[pd.DataFrame, pd.DataFrame], go.Figure]
 
@@ -25,8 +26,8 @@ class ChartSpec:
     insight: str  # lectura sobre el catálogo completo, se usa en el notebook
     build: Builder
 
-    def render(self, titles: pd.DataFrame, credits: pd.DataFrame) -> go.Figure:
-        return self.build(titles, credits).update_layout(title_text=self.title)
+    def render(self, titles: pd.DataFrame, credits: pd.DataFrame, theme: Theme) -> go.Figure:
+        return figures.apply_theme(self.build(titles, credits), theme, self.title)
 
 
 def _catalog_by_decade(titles: pd.DataFrame, _: pd.DataFrame) -> go.Figure:
