@@ -1,7 +1,7 @@
 # HBO Max · Películas y Series (Dash)
 
-Actividad 4 de Visualización de datos, Universidad de La Salle. Dashboard interactivo con Python, Dash y Plotly sobre el
-catálogo de HBO Max en EE. UU. (JustWatch, mayo de 2022): `archive/titles.csv` y `archive/credits.csv`.
+Dashboard interactivo con Python, Dash y Plotly sobre el
+catálogo de HBO Max en EE. UU. (JustWatch, mayo de 2022)
 
 ## Datos y créditos
 
