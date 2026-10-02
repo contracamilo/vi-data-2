@@ -3,7 +3,8 @@
 El notebook es autocontenido (funciona en Colab sin clonar el repo): cada módulo se escribe
 con `%%writefile`, y la sección de análisis sale del catálogo `views.charts.CHARTS`.
 
-Uso: python tools/build_notebook.py
+Uso: python tools/build_notebook.py           regenera el notebook (sin salidas)
+     python tools/build_notebook.py --check   verifica que el código coincida con src/ (CI)
 """
 
 import json
@@ -45,7 +46,7 @@ def header_cells() -> list[dict]:
     return [
         md(f"""
 # HBO Max · Películas y Series
-**Actividad 4 · Mi primer prototipo de dashboard** — Visualización de datos, Universidad de La Salle.
+**Actividad 4 · prototipo de dashboard**
 
 **Dataset:** [HBO Max TV Shows and Movies](https://www.kaggle.com/datasets/victorsoeiro/hbo-max-tv-shows-and-movies)
 (Victor Soeiro, Kaggle), con datos de [JustWatch](https://www.justwatch.com/) del catálogo de EE. UU. en mayo de 2022:
@@ -180,11 +181,11 @@ app.run(jupyter_mode="inline", height=2600, debug=False)
     ]
 
 
-def main() -> None:
+def build() -> dict:
     cells = header_cells() + module_cells() + processing_cells() + analysis_cells() + closing_cells()
     for i, cell in enumerate(cells):
         cell["id"] = f"cell-{i:03d}"  # ids estables: regenerar no produce diffs innecesarios
-    notebook = {
+    return {
         "cells": cells,
         "metadata": {
             "kernelspec": {"display_name": "Python 3", "language": "python", "name": "python3"},
@@ -193,8 +194,34 @@ def main() -> None:
         "nbformat": 4,
         "nbformat_minor": 5,
     }
+
+
+def _sources(notebook: dict) -> list[tuple[str, str]]:
+    """Tipo y contenido de cada celda; ignora salidas y metadatos que agrega Colab al ejecutar."""
+    return [(c["cell_type"], "".join(c["source"])) for c in notebook["cells"]]
+
+
+def check() -> int:
+    """Verifica que el notebook versionado tenga el mismo código que `src/` (puede incluir salidas)."""
+    committed = json.loads(OUT.read_text())
+    expected, actual = _sources(build()), _sources(committed)
+    if expected == actual:
+        print(f"{OUT.name} está al día con src/")
+        return 0
+    stale = next(
+        (i for i, (e, a) in enumerate(zip(expected, actual, strict=False)) if e != a), min(len(expected), len(actual))
+    )
+    print(f"{OUT.name} está desactualizado (primera diferencia en la celda {stale}).")
+    print("Ejecuta: python tools/build_notebook.py")
+    return 1
+
+
+def main() -> None:
+    if "--check" in sys.argv:
+        sys.exit(check())
+    notebook = build()
     OUT.write_text(json.dumps(notebook, indent=1, ensure_ascii=False) + "\n")
-    print(f"Escrito {OUT.relative_to(ROOT)} ({len(cells)} celdas)")
+    print(f"Escrito {OUT.relative_to(ROOT)} ({len(notebook['cells'])} celdas)")
 
 
 if __name__ == "__main__":

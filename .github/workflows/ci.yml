@@ -22,6 +22,4 @@ jobs:
       - name: Tests
         run: pytest -q
       - name: Notebook al día con src/
-        run: |
-          python tools/build_notebook.py
-          git diff --exit-code dashboard_hbo_max.ipynb
+        run: python tools/build_notebook.py --check
